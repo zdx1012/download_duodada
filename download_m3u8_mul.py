@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import json
 import os
 import shutil
 
@@ -66,10 +66,13 @@ class DownloadVideo:
         print("当前处理的电视名：", file_name[0], file_index[0])
         #  提取m3u8起始文件地址
         html = self.__download_html(location)
-        pat = re.compile(r'(https://youku.cdn(?:\d*?)-okzy.com/(?:\d*?)/(?:.*?)/index.m3u8)')
+        pat = re.compile(r'﻿var cms_player = (.*?);document.write')
         find_result = re.findall(pattern=pat, string=html)
         assert len(find_result) == 1, '未找到资源的起始播放链接'
-        self.__get_redirect_url(find_result[0])
+        info_dict = json.loads(find_result[0])
+        url = info_dict['url']
+
+        self.__get_redirect_url(url)
 
     def __get_redirect_url(self, url):
         """
@@ -110,8 +113,9 @@ class DownloadVideo:
             unknow = True  # 用来判断是否找到了下载的地址
             # 多进程爬取
 
-            p = Pool(10)
+            p = Pool(30)
             try:
+                print(len(file_line))
                 for index, line in enumerate(file_line):
                     line = line.strip()
                     if "EXTINF" in line:
@@ -152,7 +156,7 @@ class DownloadVideo:
                 self.__start_urls.append(parse.urljoin(self.__start_url, href))
         else:
             self.__start_urls.append(self.__start_url)
-        self.__start_urls = self.__start_urls[33:]
+        self.__start_urls = self.__start_urls[41:]
         print('本次任务共爬取电视 {0} 集'.format(len(self.__start_urls)))
         for tmp_url in self.__start_urls:
             self.__get_index_url(tmp_url)
