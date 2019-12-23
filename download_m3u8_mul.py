@@ -13,11 +13,15 @@ from multiprocessing import Pool
 
 def long_time_task(url, path):
     if not os.path.exists(path):
-        res = requests.get(url)
-        # 写入文件
-        with open(path, 'ab') as f:
-            f.write(res.content)
-            f.flush()
+        try:
+            res = requests.get(url, timeout=30)
+            # 写入文件
+            with open(path, 'ab') as f:
+                f.write(res.content)
+                f.flush()
+        except:
+            print('重试：{0}'.format(url))
+            long_time_task(url, path)
 
 
 class DownloadVideo:
@@ -77,8 +81,7 @@ class DownloadVideo:
     def __get_redirect_url(self, url):
         """
         获取重定向后的m3u8下载地址
-        :param arg1:
-        :param arg2:
+
         :return:
         """
         all_content = requests.get(url).text
@@ -156,7 +159,7 @@ class DownloadVideo:
                 self.__start_urls.append(parse.urljoin(self.__start_url, href))
         else:
             self.__start_urls.append(self.__start_url)
-        self.__start_urls = self.__start_urls[41:]
+        self.__start_urls = self.__start_urls[40:]
         print('本次任务共爬取电视 {0} 集'.format(len(self.__start_urls)))
         for tmp_url in self.__start_urls:
             self.__get_index_url(tmp_url)
